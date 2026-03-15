@@ -1,7 +1,7 @@
 {
-  "name": "bettingexpert-consensus-server",
+  "name": "picks-board",
   "version": "1.0.0",
-  "description": "Local BettingExpert consensus scraper and JSON server",
+  "description": "Local picks board scraper and JSON server",
   "type": "module",
   "main": "src/server.js",
   "scripts": {

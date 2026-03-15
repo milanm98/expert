@@ -27,8 +27,8 @@ try {
     path.join(distDir, "site-config.json"),
     `${JSON.stringify(
       {
-        title: process.env.SITE_TITLE ?? "Consensus Picks",
-        tagline: process.env.SITE_TAGLINE ?? "Daily BettingExpert consensus picks"
+        title: process.env.SITE_TITLE ?? "Best Picks for Today",
+        tagline: process.env.SITE_TAGLINE ?? "Daily best picks"
       },
       null,
       2

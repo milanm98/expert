@@ -36,7 +36,7 @@ const server = http.createServer(async (request, response) => {
 });
 
 server.listen(config.port, config.host, () => {
-  console.log(`BettingExpert consensus server listening on http://${config.host}:${config.port}`);
+  console.log(`Picks board server listening on http://${config.host}:${config.port}`);
 });
 
 process.on("SIGINT", async () => {
