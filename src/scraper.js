@@ -78,7 +78,7 @@ export class BettingExpertScraper {
   }
 
   async #login(warnings) {
-    await this.#page.goto(this.#config.loginUrl, { waitUntil: "networkidle" });
+    await this.#gotoPage(this.#page, this.#config.loginUrl);
     await this.#acceptCookiesIfPresent();
 
     const openLoginButton = await this.#findVisibleLocator(selectors.login.openButton);
@@ -142,7 +142,7 @@ export class BettingExpertScraper {
   }
 
   async #fetchTopTipsters(warnings) {
-    await this.#page.goto(this.#config.leaderboardUrl, { waitUntil: "networkidle" });
+    await this.#gotoPage(this.#page, this.#config.leaderboardUrl);
 
     const pageText = await this.#page.locator("body").innerText();
     const tipsters = extractLeaderboardTipsters(pageText, this.#config.topN);
@@ -159,7 +159,7 @@ export class BettingExpertScraper {
     const collectedTips = [];
 
     for (const url of urlsToTry) {
-      await this.#page.goto(url, { waitUntil: "networkidle" });
+      await this.#gotoPage(this.#page, url);
       await this.#loadAllTipsIfPossible();
       const pageText = await this.#page.locator("body").innerText();
       const sportHints = await this.#extractTipSportHints();
@@ -193,6 +193,19 @@ export class BettingExpertScraper {
     }
 
     return false;
+  }
+
+  async #gotoPage(page, url) {
+    await page.goto(url, {
+      waitUntil: "domcontentloaded",
+      timeout: this.#config.timeoutMs
+    });
+
+    await page.waitForLoadState("domcontentloaded", {
+      timeout: Math.min(this.#config.timeoutMs, 10_000)
+    }).catch(() => {});
+
+    await page.waitForTimeout(1_000);
   }
 
   async #waitForVisibleLocator(selector, timeoutMs, root = this.#page) {
@@ -342,7 +355,7 @@ export class BettingExpertScraper {
     detailPage.setDefaultTimeout(this.#config.timeoutMs);
 
     try {
-      await detailPage.goto(pick.eventUrl, { waitUntil: "networkidle" });
+      await this.#gotoPage(detailPage, pick.eventUrl);
       const pageText = await detailPage.locator("body").innerText();
       return extractTipsterArguments(pageText, pick);
     } finally {
