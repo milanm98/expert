@@ -24,7 +24,9 @@ async function init() {
   siteTagline.textContent = config.tagline;
 
   sourceDate.textContent = formatDate(payload.sourceDate);
-  summaryLine.textContent = `${payload.consensusPicks.length} pick${payload.consensusPicks.length === 1 ? "" : "s"} surfaced from ${payload.totalTodayTips} scanned tips.`;
+  summaryLine.textContent = payload.ok
+    ? `${payload.consensusPicks.length} pick${payload.consensusPicks.length === 1 ? "" : "s"} surfaced from ${payload.totalTodayTips} scanned tips.`
+    : getIssueSummary(payload);
 
   const visibleTipsterNames = createVisibleTipsterNames(payload);
   renderStatus(payload);
@@ -47,9 +49,7 @@ function renderPicks(picks, ok, visibleTipsterNames) {
   emptyState.hidden = picks.length !== 0;
 
   if (picks.length === 0) {
-    emptyState.textContent = ok
-      ? "No best picks were found on the latest run."
-      : "The latest run did not complete successfully.";
+    emptyState.textContent = ok ? "No best picks were found on the latest run." : getIssueDetails();
     return;
   }
 
@@ -89,6 +89,7 @@ function renderPicks(picks, ok, visibleTipsterNames) {
 function renderFatal(error) {
   statusPill.textContent = "Issue";
   statusPill.dataset.state = "error";
+  summaryLine.textContent = "Latest site data could not be loaded.";
   emptyState.hidden = false;
   emptyState.textContent = `Unable to load the latest site data: ${error.message}`;
 }
@@ -159,4 +160,18 @@ function escapeHtml(value) {
 
 function normalizeTipsterName(value) {
   return String(value ?? "").trim().toLowerCase();
+}
+
+function getIssueSummary(payload) {
+  const firstWarning = payload.warnings?.find(Boolean);
+  return firstWarning ? `Latest run issue: ${firstWarning}` : "The latest run did not complete successfully.";
+}
+
+function getIssueDetails() {
+  try {
+    const payloadUrl = new URL("./today.json", import.meta.url);
+    return `The latest run did not complete successfully. Open ${payloadUrl.pathname.split("/").pop()} for the recorded warning details.`;
+  } catch {
+    return "The latest run did not complete successfully. Open today.json for the recorded warning details.";
+  }
 }

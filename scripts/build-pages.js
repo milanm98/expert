@@ -19,6 +19,11 @@ const service = new ConsensusService({ scraper, config });
 
 try {
   const payload = await service.getTodayConsensus();
+  if (!payload.ok) {
+    const message = payload.warnings?.find(Boolean) ?? "The scraping run did not complete successfully.";
+    throw new Error(`Static site build aborted: ${message}`);
+  }
+
   const buildId = Date.now().toString();
 
   prepareDistDirectory();
