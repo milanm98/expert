@@ -6,10 +6,10 @@ export const selectors = {
     'button:has-text("I agree")'
   ],
   login: {
-    openButton: 'button:has-text("Log in")',
+    openButton: 'button:has-text("Log in"), button:has-text("Login"), a:has-text("Log in"), a:has-text("Login")',
     username: 'input[name="email"], input[name="username"], input[type="email"]',
     password: 'input[name="password"], input[type="password"]',
-    submit: 'button[type="submit"], button:has-text("Log in"), button:has-text("Sign in")',
+    submit: 'button[type="submit"], button:has-text("Log in"), button:has-text("Login"), button:has-text("Sign in")',
     successSignals: [
       'button:has-text("Log out")',
       'a:has-text("Settings")',

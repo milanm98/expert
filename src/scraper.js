@@ -81,33 +81,42 @@ export class BettingExpertScraper {
     await this.#page.goto(this.#config.loginUrl, { waitUntil: "networkidle" });
     await this.#acceptCookiesIfPresent();
 
-    const openLoginButton = this.#page.locator(selectors.login.openButton).first();
-    if ((await openLoginButton.count()) === 0) {
+    const openLoginButton = await this.#findVisibleLocator(selectors.login.openButton);
+    if (!openLoginButton) {
       throw new Error("Unable to find the BettingExpert login button.");
     }
 
     await openLoginButton.click();
 
-    const usernameField = this.#page.locator(selectors.login.username).first();
-    const passwordField = this.#page.locator(selectors.login.password).first();
-
-    await usernameField.waitFor({ state: "visible", timeout: 10_000 });
-    await passwordField.waitFor({ state: "visible", timeout: 10_000 });
-
-    if ((await passwordField.count()) === 0) {
+    const usernameField = await this.#waitForVisibleLocator(selectors.login.username, 10_000);
+    const passwordField = await this.#waitForVisibleLocator(selectors.login.password, 10_000);
+    if (!usernameField || !passwordField) {
       throw new Error("Unable to find the BettingExpert login form.");
     }
 
-    await usernameField.fill(this.#config.username);
-    await passwordField.fill(this.#config.password);
+    await this.#fillField(usernameField, this.#config.username);
+    await this.#fillField(passwordField, this.#config.password);
 
     const loginForm = usernameField.locator("xpath=ancestor::form[1]").first();
-    const submitButton = loginForm.locator(selectors.login.submit).last();
+    const submitButton = await this.#findVisibleLocator(selectors.login.submit, loginForm);
 
-    if ((await submitButton.count()) > 0) {
-      await submitButton.click();
+    if (submitButton) {
+      const enabled = await this.#waitForLocatorEnabled(submitButton, 5_000);
+      if (enabled) {
+        await submitButton.click();
+      } else {
+        await loginForm.evaluate((form) => {
+          if (form instanceof HTMLFormElement) {
+            form.requestSubmit();
+          }
+        });
+      }
     } else {
-      await passwordField.press("Enter");
+      await loginForm.evaluate((form) => {
+        if (form instanceof HTMLFormElement) {
+          form.requestSubmit();
+        }
+      });
     }
 
     const success = await this.#waitForAnyLocator(selectors.login.successSignals, 10_000);
@@ -178,6 +187,57 @@ export class BettingExpertScraper {
         if ((await this.#page.locator(selector).count()) > 0) {
           return true;
         }
+      }
+
+      await this.#page.waitForTimeout(250);
+    }
+
+    return false;
+  }
+
+  async #waitForVisibleLocator(selector, timeoutMs, root = this.#page) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      const locator = await this.#findVisibleLocator(selector, root);
+      if (locator) {
+        return locator;
+      }
+
+      await this.#page.waitForTimeout(250);
+    }
+
+    return null;
+  }
+
+  async #findVisibleLocator(selector, root = this.#page) {
+    const matches = root.locator(selector);
+    const count = await matches.count();
+    for (let index = 0; index < count; index += 1) {
+      const candidate = matches.nth(index);
+      const isVisible = await candidate.isVisible().catch(() => false);
+      if (!isVisible) {
+        continue;
+      }
+
+      return candidate;
+    }
+
+    return null;
+  }
+
+  async #fillField(locator, value) {
+    await locator.click();
+    await locator.fill(value);
+    await locator.dispatchEvent("input");
+    await locator.dispatchEvent("change");
+    await locator.blur();
+  }
+
+  async #waitForLocatorEnabled(locator, timeoutMs) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (await locator.isEnabled().catch(() => false)) {
+        return true;
       }
 
       await this.#page.waitForTimeout(250);
