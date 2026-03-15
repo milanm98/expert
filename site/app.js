@@ -13,9 +13,10 @@ init().catch((error) => {
 });
 
 async function init() {
+  const assetVersion = new URL(import.meta.url).searchParams.get("v") ?? Date.now().toString();
   const [config, payload] = await Promise.all([
-    fetchJson("./site-config.json"),
-    fetchJson("./today.json")
+    fetchJson(`./site-config.json?v=${assetVersion}`),
+    fetchJson(`./today.json?v=${assetVersion}`)
   ]);
 
   document.title = config.title;

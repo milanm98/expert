@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadEnvFile, getConfig } from "../src/config.js";
@@ -19,9 +19,11 @@ const service = new ConsensusService({ scraper, config });
 
 try {
   const payload = await service.getTodayConsensus();
+  const buildId = Date.now().toString();
 
   prepareDistDirectory();
   cpSync(siteDir, distDir, { recursive: true });
+  stampBuildAssets(buildId);
   writeFileSync(path.join(distDir, "today.json"), `${JSON.stringify(payload, null, 2)}\n`);
   writeFileSync(
     path.join(distDir, "site-config.json"),
@@ -47,4 +49,10 @@ function prepareDistDirectory() {
   }
 
   mkdirSync(distDir, { recursive: true });
+}
+
+function stampBuildAssets(buildId) {
+  const indexPath = path.join(distDir, "index.html");
+  const indexContents = readFileSync(indexPath, "utf8");
+  writeFileSync(indexPath, indexContents.replaceAll("__BUILD_ID__", buildId));
 }
