@@ -19,8 +19,9 @@ This project logs into BettingExpert with Playwright, collects today's tips, com
 
 ## GitHub Pages deployment
 
-The repo includes [deploy-pages.yml](/Users/simpletask/Desktop/expert/.github/workflows/deploy-pages.yml), which:
+The repo includes `.github/workflows/deploy-pages.yml`, which:
 
+- runs on every push to `main`
 - runs every day at `07:00 UTC`
 - also supports manual runs through `workflow_dispatch`
 - installs Playwright
